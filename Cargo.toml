@@ -1,0 +1,83 @@
+[package]
+name = "passman-cli"
+version = "0.1.0"
+edition = "2021"
+authors = ["Hpgbao2204"]
+description = "A secure offline password manager CLI tool built with Rust"
+readme = "README.md"
+homepage = "https://github.com/Hpgbao2204/passman_cli"
+repository = "https://github.com/Hpgbao2204/passman_cli"
+license = "MIT"
+keywords = ["password", "manager", "cli", "security", "encryption"]
+categories = ["command-line-utilities", "cryptography"]
+rust-version = "1.70.0"
+
+[[bin]]
+name = "passman"
+path = "src/main.rs"
+
+[dependencies]
+# CLI Framework
+clap = { version = "4.4", features = ["derive", "color", "env"] }
+
+# Database
+rusqlite = { version = "0.30", features = ["bundled", "chrono"] }
+
+# Cryptography
+ring = "0.17"
+argon2 = "0.5"
+rand = "0.8"
+chacha20poly1305 = "0.10"
+zeroize = { version = "1.7", features = ["derive"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# System Integration
+clipboard = { version = "0.5", optional = true }
+rpassword = "7.3"
+dirs = "5.0"
+
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+anyhow = "1.0"
+thiserror = "1.0"
+colored = "2.1"
+indicatif = "0.17"
+
+# Async runtime
+tokio = { version = "1.0", features = ["full"] }
+
+# Logging
+env_logger = "0.10"
+log = "0.4"
+
+# Config
+toml = "0.8"
+config = "0.14"
+
+[dev-dependencies]
+tempfile = "3.8"
+assert_cmd = "2.0"
+predicates = "3.0"
+serial_test = "3.0"
+
+[features]
+default = ["native-crypto"]
+native-crypto = []
+clipboard-support = ["clipboard"]
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+overflow-checks = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

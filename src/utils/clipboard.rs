@@ -1,4 +1,7 @@
 use crate::{Error, Result};
+
+#[cfg(feature = "clipboard-support")]
+use clipboard::{ClipboardContext, ClipboardProvider};
 use std::time::Duration;
 
 /// Clipboard manager for secure password copying
@@ -16,15 +19,22 @@ impl ClipboardManager {
 
     /// Copy text to clipboard
     pub fn copy(&self, text: &str) -> Result<()> {
-        use clipboard::{ClipboardContext, ClipboardProvider};
-        
-        let mut ctx: ClipboardContext = ClipboardProvider::new()
-            .map_err(|e| Error::Clipboard(format!("Failed to access clipboard: {}", e)))?;
-        
-        ctx.set_contents(text.to_string())
-            .map_err(|e| Error::Clipboard(format!("Failed to copy to clipboard: {}", e)))?;
-        
-        Ok(())
+        #[cfg(feature = "clipboard-support")]
+        {
+            let mut ctx: ClipboardContext = ClipboardProvider::new()
+                .map_err(|e| Error::Clipboard(format!("Failed to access clipboard: {}", e)))?;
+            
+            ctx.set_contents(text.to_string())
+                .map_err(|e| Error::Clipboard(format!("Failed to copy to clipboard: {}", e)))?;
+            
+            Ok(())
+        }
+        #[cfg(not(feature = "clipboard-support"))]
+        {
+            println!("Text to copy: {}", text);
+            println!("Note: Clipboard support not available. The text is displayed above.");
+            Ok(())
+        }
     }
 
     /// Copy text to clipboard with auto-clear
@@ -52,13 +62,18 @@ impl ClipboardManager {
 
     /// Get current clipboard contents
     pub fn get(&self) -> Result<String> {
-        use clipboard::{ClipboardContext, ClipboardProvider};
-        
-        let mut ctx: ClipboardContext = ClipboardProvider::new()
-            .map_err(|e| Error::Clipboard(format!("Failed to access clipboard: {}", e)))?;
-        
-        ctx.get_contents()
-            .map_err(|e| Error::Clipboard(format!("Failed to read from clipboard: {}", e)))
+        #[cfg(feature = "clipboard-support")]
+        {
+            let mut ctx: ClipboardContext = ClipboardProvider::new()
+                .map_err(|e| Error::Clipboard(format!("Failed to access clipboard: {}", e)))?;
+            
+            ctx.get_contents()
+                .map_err(|e| Error::Clipboard(format!("Failed to read from clipboard: {}", e)))
+        }
+        #[cfg(not(feature = "clipboard-support"))]
+        {
+            Err(Error::Clipboard("Clipboard support not available".to_string()))
+        }
     }
 
     /// Clear clipboard
@@ -68,12 +83,19 @@ impl ClipboardManager {
 
     /// Clear clipboard (static method for thread use)
     fn clear_clipboard() -> Result<()> {
-        use clipboard::{ClipboardContext, ClipboardProvider};
-        let mut ctx: ClipboardContext = ClipboardProvider::new()
-            .map_err(|e| Error::Clipboard(format!("Failed to access clipboard: {}", e)))?;
-        ctx.set_contents(String::new())
-            .map_err(|e| Error::Clipboard(format!("Failed to clear clipboard: {}", e)))?;
-        Ok(())
+        #[cfg(feature = "clipboard-support")]
+        {
+            let mut ctx: ClipboardContext = ClipboardProvider::new()
+                .map_err(|e| Error::Clipboard(format!("Failed to access clipboard: {}", e)))?;
+            ctx.set_contents(String::new())
+                .map_err(|e| Error::Clipboard(format!("Failed to clear clipboard: {}", e)))?;
+            Ok(())
+        }
+        #[cfg(not(feature = "clipboard-support"))]
+        {
+            println!("Clipboard cleared (simulated)");
+            Ok(())
+        }
     }
 }
 

@@ -43,18 +43,40 @@ async fn main() -> Result<()> {
             Ok(())
         }
         Commands::Generate { length, no_symbols, no_numbers } => {
-            println!("Generating password...");
-            // TODO: Implement password generation
+            use passman_cli::utils::{PasswordGenerator, GeneratorConfig};
+            
+            let mut config = GeneratorConfig::default();
+            config.length = length;
+            config.include_symbols = !no_symbols;
+            config.include_numbers = !no_numbers;
+            
+            let generator = PasswordGenerator::with_config(config);
+            let password = generator.generate()?;
+            
+            println!("Generated password: {}", password);
+            println!("Password length: {}", password.len());
             Ok(())
         }
         Commands::Copy { name } => {
-            println!("Copying password to clipboard: {}", name);
-            // TODO: Implement clipboard functionality
+            use passman_cli::utils::copy_password;
+            
+            // For demo, generate a test password
+            let test_password = "demo-password-123";
+            println!("Copying password for '{}' to clipboard...", name);
+            copy_password(test_password)?;
             Ok(())
         }
         Commands::Search { query } => {
             println!("Searching for: {}", query);
             // TODO: Implement search functionality
+            Ok(())
+        }
+        #[cfg(feature = "web-ui")]
+        Commands::Web { port } => {
+            use passman_cli::web::WebServer;
+            
+            let server = WebServer::new(port);
+            server.serve().await?;
             Ok(())
         }
     }

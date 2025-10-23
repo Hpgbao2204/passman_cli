@@ -72,4 +72,11 @@ pub enum Commands {
         /// Search query
         query: String,
     },
+    /// Start web interface
+    #[cfg(feature = "web-ui")]
+    Web {
+        /// Port to run web server on
+        #[arg(short, long, default_value_t = 8080)]
+        port: u16,
+    },
 }

@@ -48,7 +48,7 @@ impl Default for Config {
         let mut database_path = dirs::config_dir()
             .or_else(|| dirs::home_dir())
             .unwrap_or_else(|| PathBuf::from("."));
-        
+
         database_path.push(APP_NAME);
         database_path.push(DEFAULT_DB_NAME);
 
@@ -88,7 +88,7 @@ impl Config {
     /// Load configuration from file or create default
     pub fn load() -> Result<Self> {
         let config_path = Self::config_file_path()?;
-        
+
         if config_path.exists() {
             let contents = std::fs::read_to_string(&config_path)?;
             let config: Config = toml::from_str(&contents)
@@ -104,7 +104,7 @@ impl Config {
     /// Save configuration to file
     pub fn save(&self) -> Result<()> {
         let config_path = Self::config_file_path()?;
-        
+
         // Create config directory if it doesn't exist
         if let Some(parent) = config_path.parent() {
             std::fs::create_dir_all(parent)?;
@@ -112,7 +112,7 @@ impl Config {
 
         let toml_string = toml::to_string_pretty(self)
             .map_err(|e| Error::Config(config::ConfigError::Message(e.to_string())))?;
-        
+
         std::fs::write(config_path, toml_string)?;
         Ok(())
     }
@@ -121,10 +121,12 @@ impl Config {
     fn config_file_path() -> Result<PathBuf> {
         let mut config_path = dirs::config_dir()
             .or_else(|| dirs::home_dir())
-            .ok_or_else(|| Error::Config(config::ConfigError::Message(
-                "Cannot determine config directory".to_string()
-            )))?;
-        
+            .ok_or_else(|| {
+                Error::Config(config::ConfigError::Message(
+                    "Cannot determine config directory".to_string(),
+                ))
+            })?;
+
         config_path.push(APP_NAME);
         config_path.push(CONFIG_FILE_NAME);
         Ok(config_path)

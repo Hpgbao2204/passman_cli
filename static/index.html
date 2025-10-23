@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PassMan-CLI - Web Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-item input {
+            width: auto;
+            margin-right: 8px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .password-display {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: #2d3748;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        
+        .passwords-list {
+            grid-column: 1 / -1;
+        }
+        
+        .password-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 4px solid #667eea;
+        }
+        
+        .password-item h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+        
+        .password-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            color: #718096;
+            font-size: 14px;
+        }
+        
+        .copy-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .copy-btn:hover {
+            background: #38a169;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            border: 1px solid #9ae6b4;
+        }
+        
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 1px solid #fc8181;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 PassMan-CLI</h1>
+            <p>Secure Password Manager - Web Interface</p>
+        </div>
+        
+        <div class="dashboard">
+            <!-- Password Generator -->
+            <div class="card">
+                <h2>🎲 Generate Password</h2>
+                <form id="generateForm">
+                    <div class="form-group">
+                        <label for="length">Password Length</label>
+                        <input type="number" id="length" value="16" min="4" max="128">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Include Characters:</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="uppercase" checked>
+                                <label for="uppercase">Uppercase (A-Z)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="lowercase" checked>
+                                <label for="lowercase">Lowercase (a-z)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="numbers" checked>
+                                <label for="numbers">Numbers (0-9)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="checkbox" id="symbols" checked>
+                                <label for="symbols">Symbols (!@#$)</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn">Generate Password</button>
+                </form>
+                
+                <div id="generateResult"></div>
+            </div>
+            
+            <!-- Add Password -->
+            <div class="card">
+                <h2>➕ Add New Password</h2>
+                <form id="addForm">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" placeholder="e.g., GitHub, Gmail" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="username">Username/Email</label>
+                        <input type="text" id="username" placeholder="your@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter password" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="url">URL (optional)</label>
+                        <input type="url" id="url" placeholder="https://example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes (optional)</label>
+                        <input type="text" id="notes" placeholder="Additional notes">
+                    </div>
+                    
+                    <button type="submit" class="btn">Add Password</button>
+                </form>
+                
+                <div id="addResult"></div>
+            </div>
+        </div>
+        
+        <!-- Passwords List -->
+        <div class="card passwords-list">
+            <h2>🔑 Your Passwords</h2>
+            <div id="passwordsList">
+                <p>Loading passwords...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate Password
+        document.getElementById('generateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                length: parseInt(document.getElementById('length').value),
+                include_uppercase: document.getElementById('uppercase').checked,
+                include_lowercase: document.getElementById('lowercase').checked,
+                include_numbers: document.getElementById('numbers').checked,
+                include_symbols: document.getElementById('symbols').checked
+            };
+            
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                document.getElementById('generateResult').innerHTML = `
+                    <div class="result">
+                        <strong>Generated Password:</strong>
+                        <div class="password-display">${result.password}</div>
+                        <small>Length: ${result.length} characters</small>
+                        <br>
+                        <button class="copy-btn" onclick="copyToClipboard('${result.password}')">
+                            Copy Password
+                        </button>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('generateResult').innerHTML = `
+                    <div class="status error">Error generating password: ${error.message}</div>
+                `;
+            }
+        });
+        
+        // Add Password
+        document.getElementById('addForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('title').value,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                url: document.getElementById('url').value || null,
+                notes: document.getElementById('notes').value || null
+            };
+            
+            try {
+                const response = await fetch('/api/passwords', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                document.getElementById('addResult').innerHTML = `
+                    <div class="status success">
+                        Password for "${result.title}" added successfully!
+                    </div>
+                `;
+                
+                // Clear form
+                document.getElementById('addForm').reset();
+                
+                // Refresh passwords list
+                loadPasswords();
+                
+            } catch (error) {
+                document.getElementById('addResult').innerHTML = `
+                    <div class="status error">Error adding password: ${error.message}</div>
+                `;
+            }
+        });
+        
+        // Load Passwords
+        async function loadPasswords() {
+            try {
+                const response = await fetch('/api/passwords');
+                const passwords = await response.json();
+                
+                const passwordsList = document.getElementById('passwordsList');
+                
+                if (passwords.length === 0) {
+                    passwordsList.innerHTML = '<p>No passwords saved yet. Add your first password above!</p>';
+                    return;
+                }
+                
+                passwordsList.innerHTML = passwords.map(password => `
+                    <div class="password-item">
+                        <h3>${password.title}</h3>
+                        <div class="password-meta">
+                            <div><strong>Username:</strong> ${password.username}</div>
+                            <div><strong>URL:</strong> ${password.url || 'N/A'}</div>
+                            <div><strong>Created:</strong> ${new Date(password.created_at).toLocaleDateString()}</div>
+                            <div><strong>Notes:</strong> ${password.notes || 'None'}</div>
+                        </div>
+                        <button class="copy-btn" onclick="copyPasswordPlaceholder('${password.title}')">
+                            Copy Password
+                        </button>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                document.getElementById('passwordsList').innerHTML = `
+                    <div class="status error">Error loading passwords: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Copy to clipboard
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                // Show feedback
+                event.target.textContent = 'Copied!';
+                setTimeout(() => {
+                    event.target.textContent = 'Copy Password';
+                }, 2000);
+            } catch (error) {
+                alert('Failed to copy to clipboard: ' + error.message);
+            }
+        }
+        
+        // Copy password placeholder
+        function copyPasswordPlaceholder(title) {
+            // In a real app, this would fetch the actual encrypted password
+            alert(`In a real implementation, this would copy the password for "${title}" to your clipboard.\\n\\nThis is just a demo - passwords are not actually stored yet.`);
+        }
+        
+        // Load passwords on page load
+        document.addEventListener('DOMContentLoaded', loadPasswords);
+    </script>
+</body>
+</html>

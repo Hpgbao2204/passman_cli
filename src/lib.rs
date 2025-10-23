@@ -19,6 +19,9 @@ pub mod database;
 pub mod error;
 pub mod utils;
 
+#[cfg(feature = "web-ui")]
+pub mod web;
+
 pub use error::{Error, Result};
 
 /// Application name constant
